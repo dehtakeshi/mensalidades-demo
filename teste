@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atualizar Mensalidades</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <img class="brand-mark" src="./assets/logo.png" alt="Educa Mais Brasil" />
+        <h1>Cecig - Centro de Educação e Criatividade</h1>
+      </header>
+
+      <main class="content">
+        <section class="field-block">
+          <label for="unit">Unidade selecionada para atualização de mensalidades:</label>
+          <div class="select-field">
+            <select id="unit" aria-label="Unidade selecionada">
+              <option>Unidade São José - Centro Comercial Sul</option>
+              <option>Unidade Centro - Ensino Médio</option>
+              <option>Unidade Norte - Educação Criativa</option>
+            </select>
+            <span class="select-chevron" aria-hidden="true"></span>
+          </div>
+        </section>
+
+        <section class="toolbar" aria-label="Controles de ano e atualização">
+          <p>Ano: 2026</p>
+          <div class="toolbar-actions">
+            <button class="ghost-button filter-button" type="button" id="filterToggle" aria-expanded="false">
+              <span class="filter-icon" aria-hidden="true"></span>
+              Filtrar
+            </button>
+            <button class="primary-button" type="button" id="updateAll">Atualizar tudo</button>
+          </div>
+        </section>
+
+        <aside class="filter-panel" id="filterPanel" aria-label="Filtros">
+          <div>
+            <label for="shift">Turno</label>
+            <select id="shift">
+              <option>Manhã</option>
+              <option>Tarde</option>
+              <option>Noite</option>
+            </select>
+          </div>
+          <div>
+            <label for="grade">Série</label>
+            <select id="grade">
+              <option>Todos os anos</option>
+              <option>1º Ano</option>
+              <option>2º Ano</option>
+              <option>3º Ano</option>
+            </select>
+          </div>
+        </aside>
+
+        <section class="monthly-section" aria-label="Mensalidades">
+          <p class="section-label">Informe o valor da mensalidade integral :</p>
+          <div class="cards" id="cards"></div>
+        </section>
+
+        <div class="confirm-row">
+          <button class="primary-button confirm-button" type="button" id="confirm">Confirmar</button>
+        </div>
+      </main>
+
+      <footer>© 2020 Educa Mais Brasil. Todos os direitos reservados</footer>
+    </div>
+
+    <dialog class="success-modal" id="successModal">
+      <form method="dialog">
+        <div class="success-icon" aria-hidden="true">✓</div>
+        <h2>Mensalidades atualizadas com sucesso!</h2>
+        <p>Os novos valores foram liberados para as turmas selecionadas.</p>
+        <button class="primary-button" type="submit">Entendi</button>
+      </form>
+    </dialog>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
+
+# Mensalidades Demo
+
+Protótipo estático para atualização de mensalidades, implementado a partir do layout no Figma.
+
+const grades = [
+  { title: "1º Ano - Ensino Médio", period: "Manhã", discount: "30%", year: "2026", value: "300,00" },
+  { title: "2º Ano - Ensino Médio", period: "Manhã", discount: "30%", year: "2026", value: "300,00" },
+  { title: "3º Ano - Ensino Médio", period: "Manhã", discount: "30%", year: "2026", value: "300,00" },
+];
+
+const cards = document.querySelector("#cards");
+const filterToggle = document.querySelector("#filterToggle");
+const filterPanel = document.querySelector("#filterPanel");
+const confirmButton = document.querySelector("#confirm");
+const updateAllButton = document.querySelector("#updateAll");
+const successModal = document.querySelector("#successModal");
+
+function buildCard(grade) {
+  const article = document.createElement("article");
+  article.className = "grade-card";
+  article.innerHTML = `
+    <div class="grade-info">
+      <h2 class="grade-title">${grade.title}</h2>
+      <div class="badges" aria-label="Características da turma">
+        <span class="badge">${grade.period}</span>
+        <span class="badge">${grade.discount}</span>
+        <span class="badge">${grade.year}</span>
+      </div>
+    </div>
+    <div class="price-block">
+      <div class="price-label">
+        Mensalidades
+        <span class="info-dot" title="Valor integral da mensalidade">i</span>
+      </div>
+      <div class="price-field" aria-label="Valor da mensalidade">
+        <label class="price-input-label">
+          <span class="currency">R$</span>
+          <input class="amount-input" inputmode="decimal" aria-label="Valor da mensalidade de ${grade.title}" value="${grade.value}" />
+        </label>
+        <button class="edit-icon" type="button" aria-label="Editar mensalidade de ${grade.title}"></button>
+      </div>
+    </div>
+    <button class="secondary-button" type="button">Atualizar</button>
+  `;
+
+  const updateButton = article.querySelector(".secondary-button");
+  const editButton = article.querySelector(".edit-icon");
+  const amountInput = article.querySelector(".amount-input");
+
+  editButton.addEventListener("click", () => {
+    amountInput.focus();
+    amountInput.select();
+  });
+
+  amountInput.addEventListener("input", () => {
+    amountInput.value = amountInput.value.replace(/[^\d,.]/g, "");
+  });
+
+  amountInput.addEventListener("blur", () => {
+    const rawValue = amountInput.value.trim();
+    if (!rawValue) {
+      amountInput.value = grade.value;
+      return;
+    }
+
+    const normalized = rawValue.replace(/\./g, "").replace(",", ".");
+    const parsed = Number(normalized);
+    if (Number.isNaN(parsed)) {
+      amountInput.value = grade.value;
+      return;
+    }
+
+    amountInput.value = parsed.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  });
+
+  updateButton.addEventListener("click", () => {
+    updateButton.textContent = "Atualizado";
+    updateButton.style.borderColor = "var(--success)";
+    updateButton.style.color = "var(--success)";
+  });
+
+  return article;
+}
+
+grades.forEach((grade) => cards.appendChild(buildCard(grade)));
+
+filterToggle.addEventListener("click", () => {
+  const isOpen = filterPanel.classList.toggle("is-open");
+  filterToggle.setAttribute("aria-expanded", String(isOpen));
+});
+
+updateAllButton.addEventListener("click", () => {
+  document.querySelectorAll(".secondary-button").forEach((button) => {
+    button.textContent = "Atualizado";
+    button.style.borderColor = "var(--success)";
+    button.style.color = "var(--success)";
+  });
+});
+
+confirmButton.addEventListener("click", () => {
+  if (typeof successModal.showModal === "function") {
+    successModal.showModal();
+    return;
+  }
+
+  successModal.setAttribute("open", "");
+});
+
+:root {
+  --accent: #ee7601;
+  --accent-hover: #d86600;
+  --brand: #594fe1;
+  --text: #161616;
+  --muted: #5b5b5b;
+  --line: #e0e0e0;
+  --card-line: #e5e5e5;
+  --badge: #979797;
+  --success: #53d15f;
+  --shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  color: var(--text);
+  background: #fff;
+  font-family: "Nunito", Arial, sans-serif;
+}
+
+button,
+select,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: 96px 1fr 55px;
+  background: #fff;
+}
+
+.topbar {
+  position: relative;
+  display: grid;
+  grid-template-columns: 150px 1fr 150px;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding: 0 130px;
+}
+
+.brand-mark {
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.45);
+}
+
+.topbar h1 {
+  margin: 0;
+  color: var(--brand);
+  font-size: 22px;
+  line-height: 1.04;
+  font-weight: 700;
+  text-align: center;
+}
+
+.content {
+  width: min(1180px, calc(100vw - 48px));
+  margin: 0 auto;
+  padding-top: 39px;
+}
+
+.field-block {
+  display: grid;
+  gap: 12px;
+}
+
+label,
+.section-label {
+  margin: 0;
+  font-size: 18px;
+  line-height: 24px;
+  color: var(--text);
+  font-weight: 400;
+}
+
+.select-field {
+  position: relative;
+}
+
+select {
+  width: 100%;
+  height: 42px;
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--muted);
+  padding: 0 42px 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.select-chevron {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid #777;
+  border-bottom: 1.5px solid #777;
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+}
+
+.toolbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 37px;
+  width: calc(100% - 50px);
+}
+
+.toolbar p {
+  margin: 0;
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.primary-button,
+.ghost-button,
+.secondary-button {
+  height: 42px;
+  border-radius: 5px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.primary-button {
+  width: 180px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.primary-button:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.ghost-button {
+  width: 118px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.secondary-button {
+  width: 180px;
+  border: 1px solid var(--accent);
+  background: #fff;
+  color: var(--accent);
+}
+
+.secondary-button:hover {
+  background: #fff6ee;
+}
+
+.filter-icon {
+  width: 13px;
+  height: 13px;
+  position: relative;
+}
+
+.filter-icon::before,
+.filter-icon::after {
+  content: "";
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  height: 2px;
+  background: #111;
+  border-radius: 8px;
+}
+
+.filter-icon::before {
+  top: 3px;
+  box-shadow: 5px 0 0 -1px #111;
+}
+
+.filter-icon::after {
+  bottom: 3px;
+  box-shadow: -5px 0 0 -1px #111;
+}
+
+.filter-panel {
+  display: none;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 16px;
+  width: 460px;
+  margin: 14px 0 -8px auto;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.filter-panel.is-open {
+  display: grid;
+}
+
+.filter-panel label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.filter-panel select {
+  height: 38px;
+  font-size: 15px;
+}
+
+.monthly-section {
+  margin-top: 28px;
+}
+
+.cards {
+  display: grid;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.grade-card {
+  min-height: 100px;
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) auto auto;
+  align-items: center;
+  gap: 120px;
+  padding: 16px 48px;
+  border: 1px solid var(--card-line);
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.grade-info {
+  display: grid;
+  gap: 8px;
+}
+
+.grade-title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--badge);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.price-block {
+  display: grid;
+  gap: 4px;
+}
+
+.price-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.info-dot {
+  width: 14px;
+  height: 14px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.price-field {
+  width: 186px;
+  height: 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 18px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 0 16px;
+}
+
+.price-field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(238, 118, 1, 0.12);
+}
+
+.price-input-label {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.currency {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.amount-input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  padding: 0;
+  background: transparent;
+  color: #000;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.edit-icon {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  padding: 0;
+  background-color: transparent;
+  background: center / contain no-repeat url("./assets/edit.svg");
+}
+
+.edit-icon:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.confirm-row {
+  display: flex;
+  justify-content: flex-end;
+  width: calc(100% - 50px);
+  margin-top: 24px;
+}
+
+footer {
+  display: grid;
+  place-items: center;
+  border-top: 1px solid var(--line);
+  color: #ababab;
+  font-size: 14px;
+  text-align: center;
+}
+
+.success-modal {
+  width: min(462px, calc(100vw - 32px));
+  border: 0;
+  border-radius: 5px;
+  padding: 0;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.16);
+}
+
+.success-modal::backdrop {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.success-modal form {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 34px 42px;
+  text-align: center;
+}
+
+.success-modal h2 {
+  margin: 0;
+  color: var(--success);
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.success-modal p {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.success-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--success);
+  border-radius: 50%;
+  color: var(--success);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    grid-template-rows: 76px 1fr 48px;
+  }
+
+  .topbar {
+    grid-template-columns: 58px 1fr;
+    gap: 14px;
+    padding: 0 20px;
+  }
+
+  .brand-mark {
+    width: 44px;
+    height: 44px;
+    transform: scale(1.35);
+  }
+
+  .topbar h1 {
+    font-size: 15px;
+    text-align: left;
+  }
+
+  .content {
+    width: min(100% - 28px, 560px);
+    padding-top: 28px;
+  }
+
+  label,
+  .section-label,
+  select {
+    font-size: 14px;
+  }
+
+  .toolbar {
+    width: 100%;
+    align-items: flex-start;
+    gap: 16px;
+    margin-top: 26px;
+  }
+
+  .toolbar p {
+    font-size: 16px;
+  }
+
+  .toolbar-actions {
+    gap: 10px;
+  }
+
+  .ghost-button {
+    width: 96px;
+    font-size: 14px;
+  }
+
+  .primary-button,
+  .secondary-button {
+    width: 140px;
+    height: 40px;
+    font-size: 15px;
+  }
+
+  .filter-panel {
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .grade-card {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 14px;
+    padding: 18px 20px;
+  }
+
+  .price-field {
+    width: 100%;
+    max-width: 186px;
+  }
+
+  .grade-card .secondary-button {
+    width: 100%;
+  }
+
+  .confirm-row {
+    width: 100%;
+    margin-bottom: 28px;
+  }
+
+  .confirm-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .toolbar {
+    flex-direction: column;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .toolbar-actions .primary-button {
+    flex: 1;
+  }
+}
