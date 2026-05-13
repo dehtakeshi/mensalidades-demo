@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atualizar Mensalidades</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <img class="brand-mark" src="./assets/logo.png" alt="Educa Mais Brasil" />
+        <h1>Cecig - Centro de Educação e Criatividade</h1>
+      </header>
+
+      <main class="content">
+        <section class="field-block">
+          <label for="unit">Unidade selecionada para atualização de mensalidades:</label>
+          <div class="select-field">
+            <select id="unit" aria-label="Unidade selecionada">
+              <option>Unidade São José - Centro Comercial Sul</option>
+              <option>Unidade Centro - Ensino Médio</option>
+              <option>Unidade Norte - Educação Criativa</option>
+            </select>
+            <span class="select-chevron" aria-hidden="true"></span>
+          </div>
+        </section>
+
+        <section class="toolbar" aria-label="Controles de ano e atualização">
+          <p>Ano: 2026</p>
+          <div class="toolbar-actions">
+            <button class="ghost-button filter-button" type="button" id="filterToggle" aria-expanded="false">
+              <span class="filter-icon" aria-hidden="true"></span>
+              Filtrar
+            </button>
+            <button class="primary-button" type="button" id="updateAll">Atualizar tudo</button>
+          </div>
+        </section>
+
+        <aside class="filter-panel" id="filterPanel" aria-label="Filtros">
+          <div>
+            <label for="shift">Turno</label>
+            <select id="shift">
+              <option>Manhã</option>
+              <option>Tarde</option>
+              <option>Noite</option>
+            </select>
+          </div>
+          <div>
+            <label for="grade">Série</label>
+            <select id="grade">
+              <option>Todos os anos</option>
+              <option>1º Ano</option>
+              <option>2º Ano</option>
+              <option>3º Ano</option>
+            </select>
+          </div>
+        </aside>
+
+        <section class="monthly-section" aria-label="Mensalidades">
+          <p class="section-label">Informe o valor da mensalidade integral :</p>
+          <div class="cards" id="cards"></div>
+        </section>
+
+        <div class="confirm-row">
+          <button class="primary-button confirm-button" type="button" id="confirm">Confirmar</button>
+        </div>
+      </main>
+
+      <footer>© 2020 Educa Mais Brasil. Todos os direitos reservados</footer>
+    </div>
+
+    <dialog class="success-modal" id="successModal">
+      <form method="dialog">
+        <div class="success-icon" aria-hidden="true">✓</div>
+        <h2>Mensalidades atualizadas com sucesso!</h2>
+        <p>Os novos valores foram liberados para as turmas selecionadas.</p>
+        <button class="primary-button" type="submit">Entendi</button>
+      </form>
+    </dialog>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
